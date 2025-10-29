@@ -277,13 +277,13 @@ public final class Gson {
         builder.timeStyle,
         unmodifiableList(builder.factories),
         unmodifiableList(builder.hierarchyFactories),
-        builder.getAllFactories(),
+        builder.getAllFactoriesToBeAdded(),
         builder.objectToNumberStrategy,
         builder.numberToNumberStrategy,
         unmodifiableList(builder.reflectionFilters));
   }
 
-  Gson(
+  private Gson(
       Excluder excluder,
       FieldNamingStrategy fieldNamingStrategy,
       Map<Type, InstanceCreator<?>> instanceCreators,

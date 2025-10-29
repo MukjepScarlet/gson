@@ -889,7 +889,7 @@ public final class GsonBuilder {
     return new Gson(this);
   }
 
-  List<TypeAdapterFactory> getAllFactories() {
+  List<TypeAdapterFactory> getAllFactoriesToBeAdded() {
     List<TypeAdapterFactory> factories =
         new ArrayList<>(this.factories.size() + this.hierarchyFactories.size() + 3);
     factories.addAll(this.factories);
