@@ -77,7 +77,9 @@ public final class SqlTypesSupport {
       TIME_FACTORY = SqlTimeTypeAdapter.FACTORY;
       TIMESTAMP_FACTORY = SqlTimestampTypeAdapter.FACTORY;
 
-      SQL_TYPE_FACTORIES = Collections.unmodifiableList(Arrays.asList(DATE_FACTORY, TIME_FACTORY, TIMESTAMP_FACTORY));
+      SQL_TYPE_FACTORIES =
+          Collections.unmodifiableList(
+              Arrays.asList(DATE_FACTORY, TIME_FACTORY, TIMESTAMP_FACTORY));
     } else {
       DATE_DATE_TYPE = null;
       TIMESTAMP_DATE_TYPE = null;
