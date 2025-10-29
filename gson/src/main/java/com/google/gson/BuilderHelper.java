@@ -16,11 +16,23 @@
 
 package com.google.gson;
 
+import com.google.gson.internal.Excluder;
+import com.google.gson.internal.bind.ArrayTypeAdapter;
+import com.google.gson.internal.bind.CollectionTypeAdapterFactory;
+import com.google.gson.internal.bind.DefaultDateTypeAdapter;
+import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
+import com.google.gson.internal.bind.MapTypeAdapterFactory;
+import com.google.gson.internal.bind.NumberTypeAdapter;
+import com.google.gson.internal.bind.ObjectTypeAdapter;
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.internal.sql.SqlTypesSupport;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,8 +43,78 @@ import java.util.concurrent.atomic.AtomicLongArray;
 class BuilderHelper {
   private BuilderHelper() {}
 
+  static final List<TypeAdapterFactory> DEFAULT_TYPE_ADAPTER_FACTORIES;
+
+  static final int EXPECTED_FACTORIES_SIZE = 45;
+
+  static {
+    List<TypeAdapterFactory> factories = new ArrayList<>(EXPECTED_FACTORIES_SIZE);
+
+    // built-in type adapters that cannot be overridden
+    factories.add(TypeAdapters.JSON_ELEMENT_FACTORY);
+    factories.add(ObjectTypeAdapter.getFactory(Gson.DEFAULT_OBJECT_TO_NUMBER_STRATEGY));
+
+    // the excluder must precede all adapters that handle user-defined types
+    factories.add(Excluder.DEFAULT);
+
+    // dates
+    addTypeAdaptersForDate(
+        Gson.DEFAULT_DATE_PATTERN, DateFormat.DEFAULT, DateFormat.DEFAULT, factories);
+
+    // type adapters for basic platform types
+    factories.add(TypeAdapters.STRING_FACTORY);
+    factories.add(TypeAdapters.INTEGER_FACTORY);
+    factories.add(TypeAdapters.BOOLEAN_FACTORY);
+    factories.add(TypeAdapters.BYTE_FACTORY);
+    factories.add(TypeAdapters.SHORT_FACTORY);
+    TypeAdapter<Number> longAdapter = LongSerializationPolicy.DEFAULT.typeAdapter();
+    factories.add(TypeAdapters.newFactory(long.class, Long.class, longAdapter));
+    factories.add(
+        TypeAdapters.newFactory(
+            double.class, Double.class, doubleAdapter(Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES)));
+    factories.add(
+        TypeAdapters.newFactory(
+            float.class, Float.class, floatAdapter(Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES)));
+    factories.add(NumberTypeAdapter.getFactory(Gson.DEFAULT_NUMBER_TO_NUMBER_STRATEGY));
+    factories.add(TypeAdapters.ATOMIC_INTEGER_FACTORY);
+    factories.add(TypeAdapters.ATOMIC_BOOLEAN_FACTORY);
+    factories.add(TypeAdapters.newFactory(AtomicLong.class, atomicLongAdapter(longAdapter)));
+    factories.add(
+        TypeAdapters.newFactory(AtomicLongArray.class, atomicLongArrayAdapter(longAdapter)));
+    factories.add(TypeAdapters.ATOMIC_INTEGER_ARRAY_FACTORY);
+    factories.add(TypeAdapters.CHARACTER_FACTORY);
+    factories.add(TypeAdapters.STRING_BUILDER_FACTORY);
+    factories.add(TypeAdapters.STRING_BUFFER_FACTORY);
+    factories.add(TypeAdapters.BIG_DECIMAL_FACTORY);
+    factories.add(TypeAdapters.BIG_INTEGER_FACTORY);
+    // Add adapter for LazilyParsedNumber because user can obtain it from Gson and then try to
+    // serialize it again
+    factories.add(TypeAdapters.LAZILY_PARSED_NUMBER_FACTORY);
+    factories.add(TypeAdapters.URL_FACTORY);
+    factories.add(TypeAdapters.URI_FACTORY);
+    factories.add(TypeAdapters.UUID_FACTORY);
+    factories.add(TypeAdapters.CURRENCY_FACTORY);
+    factories.add(TypeAdapters.LOCALE_FACTORY);
+    factories.add(TypeAdapters.INET_ADDRESS_FACTORY);
+    factories.add(TypeAdapters.BIT_SET_FACTORY);
+    factories.add(DefaultDateTypeAdapter.DEFAULT_STYLE_FACTORY);
+    factories.add(TypeAdapters.CALENDAR_FACTORY);
+    factories.addAll(SqlTypesSupport.SQL_TYPE_FACTORIES);
+    factories.add(ArrayTypeAdapter.FACTORY);
+    factories.add(TypeAdapters.CLASS_FACTORY);
+
+    // type adapters for composite and user-defined types
+    factories.add(CollectionTypeAdapterFactory.DEFAULT);
+    factories.add(MapTypeAdapterFactory.DEFAULT);
+    factories.add(JsonAdapterAnnotationTypeAdapterFactory.DEFAULT);
+    factories.add(TypeAdapters.ENUM_FACTORY);
+    factories.add(ReflectiveTypeAdapterFactory.DEFAULT);
+
+    DEFAULT_TYPE_ADAPTER_FACTORIES = immutableList(factories);
+  }
+
   @SuppressWarnings("unchecked")
-  static <E> List<E> unmodifiableList(Collection<E> collection) {
+  static <E> List<E> immutableList(Collection<E> collection) {
     if (collection.isEmpty()) {
       return Collections.emptyList();
     }
@@ -49,7 +131,7 @@ class BuilderHelper {
                 : Arrays.asList(collection.toArray()));
   }
 
-  private static final TypeAdapter<Number> DOUBLE_WITH_CHECK =
+  private static final TypeAdapter<Number> DOUBLE_STRICT =
       new TypeAdapter<Number>() {
         @Override
         public Double read(JsonReader in) throws IOException {
@@ -72,7 +154,7 @@ class BuilderHelper {
         }
       };
 
-  private static final TypeAdapter<Number> FLOAT_WITH_CHECK =
+  private static final TypeAdapter<Number> FLOAT_STRICT =
       new TypeAdapter<Number>() {
         @Override
         public Float read(JsonReader in) throws IOException {
@@ -99,11 +181,11 @@ class BuilderHelper {
       };
 
   static TypeAdapter<Number> doubleAdapter(boolean serializeSpecialFloatingPointValues) {
-    return serializeSpecialFloatingPointValues ? TypeAdapters.DOUBLE : DOUBLE_WITH_CHECK;
+    return serializeSpecialFloatingPointValues ? TypeAdapters.DOUBLE : DOUBLE_STRICT;
   }
 
   static TypeAdapter<Number> floatAdapter(boolean serializeSpecialFloatingPointValues) {
-    return serializeSpecialFloatingPointValues ? TypeAdapters.FLOAT : FLOAT_WITH_CHECK;
+    return serializeSpecialFloatingPointValues ? TypeAdapters.FLOAT : FLOAT_STRICT;
   }
 
   private static void checkValidFloatingPoint(double value) {
@@ -161,5 +243,41 @@ class BuilderHelper {
         return new AtomicLongArray(array);
       }
     }.nullSafe();
+  }
+
+  static void addTypeAdaptersForDate(
+      String datePattern, int dateStyle, int timeStyle, List<TypeAdapterFactory> factories) {
+    TypeAdapterFactory dateAdapterFactory;
+    boolean sqlTypesSupported = SqlTypesSupport.SUPPORTS_SQL_TYPES;
+    TypeAdapterFactory sqlTimestampAdapterFactory = null;
+    TypeAdapterFactory sqlDateAdapterFactory = null;
+
+    if (datePattern != null && !datePattern.trim().isEmpty()) {
+      dateAdapterFactory = DefaultDateTypeAdapter.DateType.DATE.createAdapterFactory(datePattern);
+
+      if (sqlTypesSupported) {
+        sqlTimestampAdapterFactory =
+            SqlTypesSupport.TIMESTAMP_DATE_TYPE.createAdapterFactory(datePattern);
+        sqlDateAdapterFactory = SqlTypesSupport.DATE_DATE_TYPE.createAdapterFactory(datePattern);
+      }
+    } else if (dateStyle != DateFormat.DEFAULT || timeStyle != DateFormat.DEFAULT) {
+      dateAdapterFactory =
+          DefaultDateTypeAdapter.DateType.DATE.createAdapterFactory(dateStyle, timeStyle);
+
+      if (sqlTypesSupported) {
+        sqlTimestampAdapterFactory =
+            SqlTypesSupport.TIMESTAMP_DATE_TYPE.createAdapterFactory(dateStyle, timeStyle);
+        sqlDateAdapterFactory =
+            SqlTypesSupport.DATE_DATE_TYPE.createAdapterFactory(dateStyle, timeStyle);
+      }
+    } else {
+      return;
+    }
+
+    factories.add(dateAdapterFactory);
+    if (sqlTypesSupported) {
+      factories.add(sqlTimestampAdapterFactory);
+      factories.add(sqlDateAdapterFactory);
+    }
   }
 }

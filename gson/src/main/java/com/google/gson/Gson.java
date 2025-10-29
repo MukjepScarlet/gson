@@ -16,7 +16,7 @@
 
 package com.google.gson;
 
-import static com.google.gson.BuilderHelper.unmodifiableList;
+import static com.google.gson.BuilderHelper.immutableList;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.internal.ConstructorConstructor;
@@ -251,16 +251,16 @@ public final class Gson {
     this.datePattern = builder.datePattern;
     this.dateStyle = builder.dateStyle;
     this.timeStyle = builder.timeStyle;
-    this.builderFactories = unmodifiableList(builder.factories);
-    this.builderHierarchyFactories = unmodifiableList(builder.hierarchyFactories);
+    this.builderFactories = immutableList(builder.factories);
+    this.builderHierarchyFactories = immutableList(builder.hierarchyFactories);
     this.objectToNumberStrategy = builder.objectToNumberStrategy;
     this.numberToNumberStrategy = builder.numberToNumberStrategy;
-    this.reflectionFilters = unmodifiableList(builder.reflectionFilters);
+    this.reflectionFilters = immutableList(builder.reflectionFilters);
     this.constructorConstructor =
         new ConstructorConstructor(instanceCreators, useJdkUnsafe, reflectionFilters);
     this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
     this.factories =
-        unmodifiableList(builder.createFactories(constructorConstructor, jsonAdapterFactory));
+        immutableList(builder.createFactories(constructorConstructor, jsonAdapterFactory));
   }
 
   /**
