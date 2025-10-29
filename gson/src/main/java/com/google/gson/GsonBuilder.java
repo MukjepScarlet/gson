@@ -90,29 +90,31 @@ import java.util.Objects;
  * @author Jesse Wilson
  */
 public final class GsonBuilder {
-  private Excluder excluder = Excluder.DEFAULT;
-  private LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
-  private FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
-  private final Map<Type, InstanceCreator<?>> instanceCreators = new HashMap<>();
-  private final List<TypeAdapterFactory> factories = new ArrayList<>();
+  Excluder excluder = Excluder.DEFAULT;
+  LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
+  FieldNamingStrategy fieldNamingPolicy = Gson.DEFAULT_FIELD_NAMING_STRATEGY;
+  final Map<Type, InstanceCreator<?>> instanceCreators = new HashMap<>();
+  final List<TypeAdapterFactory> factories = new ArrayList<>();
 
   /** tree-style hierarchy factories. These come after factories for backwards compatibility. */
-  private final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<>();
+  final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<>();
 
-  private boolean serializeNulls = DEFAULT_SERIALIZE_NULLS;
-  private String datePattern = DEFAULT_DATE_PATTERN;
-  private int dateStyle = DateFormat.DEFAULT;
-  private int timeStyle = DateFormat.DEFAULT;
-  private boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
-  private boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES;
-  private boolean escapeHtmlChars = DEFAULT_ESCAPE_HTML;
-  private FormattingStyle formattingStyle = DEFAULT_FORMATTING_STYLE;
-  private boolean generateNonExecutableJson = DEFAULT_JSON_NON_EXECUTABLE;
-  private Strictness strictness = DEFAULT_STRICTNESS;
-  private boolean useJdkUnsafe = DEFAULT_USE_JDK_UNSAFE;
-  private ToNumberStrategy objectToNumberStrategy = DEFAULT_OBJECT_TO_NUMBER_STRATEGY;
-  private ToNumberStrategy numberToNumberStrategy = DEFAULT_NUMBER_TO_NUMBER_STRATEGY;
-  private final ArrayDeque<ReflectionAccessFilter> reflectionFilters = new ArrayDeque<>();
+  boolean serializeNulls = DEFAULT_SERIALIZE_NULLS;
+  String datePattern = DEFAULT_DATE_PATTERN;
+  int dateStyle = DateFormat.DEFAULT;
+  int timeStyle = DateFormat.DEFAULT;
+  boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
+  boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES;
+  boolean escapeHtmlChars = DEFAULT_ESCAPE_HTML;
+  FormattingStyle formattingStyle = DEFAULT_FORMATTING_STYLE;
+  boolean generateNonExecutableJson = DEFAULT_JSON_NON_EXECUTABLE;
+  Strictness strictness = DEFAULT_STRICTNESS;
+  boolean useJdkUnsafe = DEFAULT_USE_JDK_UNSAFE;
+  ToNumberStrategy objectToNumberStrategy = DEFAULT_OBJECT_TO_NUMBER_STRATEGY;
+  ToNumberStrategy numberToNumberStrategy = DEFAULT_NUMBER_TO_NUMBER_STRATEGY;
+  final ArrayDeque<ReflectionAccessFilter> reflectionFilters = new ArrayDeque<>();
+
+  static final GsonBuilder DEFAULT = new GsonBuilder();
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -884,6 +886,10 @@ public final class GsonBuilder {
    * @return an instance of Gson configured with the options currently set in this builder
    */
   public Gson create() {
+    return new Gson(this);
+  }
+
+  List<TypeAdapterFactory> getAllFactories() {
     List<TypeAdapterFactory> factories =
         new ArrayList<>(this.factories.size() + this.hierarchyFactories.size() + 3);
     factories.addAll(this.factories);
@@ -894,32 +900,10 @@ public final class GsonBuilder {
     factories.addAll(hierarchyFactories);
 
     addTypeAdaptersForDate(datePattern, dateStyle, timeStyle, factories);
-
-    return new Gson(
-        excluder,
-        fieldNamingPolicy,
-        new HashMap<>(instanceCreators),
-        serializeNulls,
-        complexMapKeySerialization,
-        generateNonExecutableJson,
-        escapeHtmlChars,
-        formattingStyle,
-        strictness,
-        serializeSpecialFloatingPointValues,
-        useJdkUnsafe,
-        longSerializationPolicy,
-        datePattern,
-        dateStyle,
-        timeStyle,
-        new ArrayList<>(this.factories),
-        new ArrayList<>(this.hierarchyFactories),
-        factories,
-        objectToNumberStrategy,
-        numberToNumberStrategy,
-        new ArrayList<>(reflectionFilters));
+    return Collections.unmodifiableList(factories);
   }
 
-  private static void addTypeAdaptersForDate(
+  void addTypeAdaptersForDate(
       String datePattern, int dateStyle, int timeStyle, List<TypeAdapterFactory> factories) {
     TypeAdapterFactory dateAdapterFactory;
     boolean sqlTypesSupported = SqlTypesSupport.SUPPORTS_SQL_TYPES;
