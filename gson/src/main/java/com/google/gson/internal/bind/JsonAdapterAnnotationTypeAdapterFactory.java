@@ -42,9 +42,6 @@ public final class JsonAdapterAnnotationTypeAdapterFactory implements TypeAdapte
     }
   }
 
-  public static final JsonAdapterAnnotationTypeAdapterFactory DEFAULT =
-      new JsonAdapterAnnotationTypeAdapterFactory(ConstructorConstructor.DEFAULT);
-
   /** Factory used for {@link TreeTypeAdapter}s created for {@code @JsonAdapter} on a class. */
   private static final TypeAdapterFactory TREE_TYPE_CLASS_DUMMY_FACTORY =
       new DummyTypeAdapterFactory();

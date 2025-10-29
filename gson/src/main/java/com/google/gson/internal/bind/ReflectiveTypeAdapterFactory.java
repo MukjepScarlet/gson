@@ -16,7 +16,6 @@
 
 package com.google.gson.internal.bind;
 
-import com.google.gson.FieldNamingPolicy;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
@@ -59,14 +58,6 @@ import java.util.Map;
 
 /** Type adapter that reflects over the fields and methods of a class. */
 public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
-  public static final ReflectiveTypeAdapterFactory DEFAULT =
-      new ReflectiveTypeAdapterFactory(
-          ConstructorConstructor.DEFAULT,
-          FieldNamingPolicy.IDENTITY,
-          Excluder.DEFAULT,
-          JsonAdapterAnnotationTypeAdapterFactory.DEFAULT,
-          Collections.emptyList());
-
   private final ConstructorConstructor constructorConstructor;
   private final FieldNamingStrategy fieldNamingPolicy;
   private final Excluder excluder;

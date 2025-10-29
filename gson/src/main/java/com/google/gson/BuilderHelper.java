@@ -16,6 +16,15 @@
 
 package com.google.gson;
 
+import static com.google.gson.Gson.DEFAULT_COMPLEX_MAP_KEYS;
+import static com.google.gson.Gson.DEFAULT_DATE_PATTERN;
+import static com.google.gson.Gson.DEFAULT_FIELD_NAMING_STRATEGY;
+import static com.google.gson.Gson.DEFAULT_NUMBER_TO_NUMBER_STRATEGY;
+import static com.google.gson.Gson.DEFAULT_OBJECT_TO_NUMBER_STRATEGY;
+import static com.google.gson.Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES;
+import static com.google.gson.Gson.DEFAULT_USE_JDK_UNSAFE;
+
+import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.bind.ArrayTypeAdapter;
 import com.google.gson.internal.bind.CollectionTypeAdapterFactory;
@@ -41,6 +50,28 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 final class BuilderHelper {
+  private static final ConstructorConstructor DEFAULT_CONSTRUCTOR_CONSTRUCTOR =
+      new ConstructorConstructor(
+          Collections.emptyMap(), DEFAULT_USE_JDK_UNSAFE, Collections.emptyList());
+
+  private static final MapTypeAdapterFactory DEFAULT_MAP_TYPE_ADAPTER_FACTORY =
+      new MapTypeAdapterFactory(DEFAULT_CONSTRUCTOR_CONSTRUCTOR, DEFAULT_COMPLEX_MAP_KEYS);
+
+  private static final CollectionTypeAdapterFactory DEFAULT_COLLECTION_TYPE_ADAPTER_FACTORY =
+      new CollectionTypeAdapterFactory(DEFAULT_CONSTRUCTOR_CONSTRUCTOR);
+
+  private static final JsonAdapterAnnotationTypeAdapterFactory
+      DEFAULT_JSON_ADAPTER_ANNOTATION_TYPE_ADAPTER_FACTORY =
+          new JsonAdapterAnnotationTypeAdapterFactory(DEFAULT_CONSTRUCTOR_CONSTRUCTOR);
+
+  private static final ReflectiveTypeAdapterFactory DEFAULT_REFLECTIVE_TYPE_ADAPTER_FACTORY =
+      new ReflectiveTypeAdapterFactory(
+          DEFAULT_CONSTRUCTOR_CONSTRUCTOR,
+          DEFAULT_FIELD_NAMING_STRATEGY,
+          Excluder.DEFAULT,
+          DEFAULT_JSON_ADAPTER_ANNOTATION_TYPE_ADAPTER_FACTORY,
+          Collections.emptyList());
+
   private BuilderHelper() {}
 
   static final List<TypeAdapterFactory> DEFAULT_TYPE_ADAPTER_FACTORIES;
@@ -52,14 +83,13 @@ final class BuilderHelper {
 
     // built-in type adapters that cannot be overridden
     factories.add(TypeAdapters.JSON_ELEMENT_FACTORY);
-    factories.add(ObjectTypeAdapter.getFactory(Gson.DEFAULT_OBJECT_TO_NUMBER_STRATEGY));
+    factories.add(ObjectTypeAdapter.getFactory(DEFAULT_OBJECT_TO_NUMBER_STRATEGY));
 
     // the excluder must precede all adapters that handle user-defined types
     factories.add(Excluder.DEFAULT);
 
     // dates
-    addTypeAdaptersForDate(
-        Gson.DEFAULT_DATE_PATTERN, DateFormat.DEFAULT, DateFormat.DEFAULT, factories);
+    addTypeAdaptersForDate(DEFAULT_DATE_PATTERN, DateFormat.DEFAULT, DateFormat.DEFAULT, factories);
 
     // type adapters for basic platform types
     factories.add(TypeAdapters.STRING_FACTORY);
@@ -71,11 +101,11 @@ final class BuilderHelper {
     factories.add(TypeAdapters.newFactory(long.class, Long.class, longAdapter));
     factories.add(
         TypeAdapters.newFactory(
-            double.class, Double.class, doubleAdapter(Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES)));
+            double.class, Double.class, doubleAdapter(DEFAULT_SPECIALIZE_FLOAT_VALUES)));
     factories.add(
         TypeAdapters.newFactory(
-            float.class, Float.class, floatAdapter(Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES)));
-    factories.add(NumberTypeAdapter.getFactory(Gson.DEFAULT_NUMBER_TO_NUMBER_STRATEGY));
+            float.class, Float.class, floatAdapter(DEFAULT_SPECIALIZE_FLOAT_VALUES)));
+    factories.add(NumberTypeAdapter.getFactory(DEFAULT_NUMBER_TO_NUMBER_STRATEGY));
     factories.add(TypeAdapters.ATOMIC_INTEGER_FACTORY);
     factories.add(TypeAdapters.ATOMIC_BOOLEAN_FACTORY);
     factories.add(TypeAdapters.newFactory(AtomicLong.class, atomicLongAdapter(longAdapter)));
@@ -104,11 +134,11 @@ final class BuilderHelper {
     factories.add(TypeAdapters.CLASS_FACTORY);
 
     // type adapters for composite and user-defined types
-    factories.add(CollectionTypeAdapterFactory.DEFAULT);
-    factories.add(MapTypeAdapterFactory.DEFAULT);
-    factories.add(JsonAdapterAnnotationTypeAdapterFactory.DEFAULT);
+    factories.add(DEFAULT_COLLECTION_TYPE_ADAPTER_FACTORY);
+    factories.add(DEFAULT_MAP_TYPE_ADAPTER_FACTORY);
+    factories.add(DEFAULT_JSON_ADAPTER_ANNOTATION_TYPE_ADAPTER_FACTORY);
     factories.add(TypeAdapters.ENUM_FACTORY);
-    factories.add(ReflectiveTypeAdapterFactory.DEFAULT);
+    factories.add(DEFAULT_REFLECTIVE_TYPE_ADAPTER_FACTORY);
 
     DEFAULT_TYPE_ADAPTER_FACTORIES = immutableList(factories);
   }

@@ -24,8 +24,10 @@ import static com.google.gson.BuilderHelper.atomicLongArrayAdapter;
 import static com.google.gson.BuilderHelper.doubleAdapter;
 import static com.google.gson.BuilderHelper.floatAdapter;
 import static com.google.gson.BuilderHelper.immutableList;
+import static com.google.gson.Gson.DEFAULT_COMPLEX_MAP_KEYS;
 import static com.google.gson.Gson.DEFAULT_DATE_PATTERN;
 import static com.google.gson.Gson.DEFAULT_ESCAPE_HTML;
+import static com.google.gson.Gson.DEFAULT_FIELD_NAMING_STRATEGY;
 import static com.google.gson.Gson.DEFAULT_FORMATTING_STYLE;
 import static com.google.gson.Gson.DEFAULT_JSON_NON_EXECUTABLE;
 import static com.google.gson.Gson.DEFAULT_NUMBER_TO_NUMBER_STRATEGY;
@@ -33,8 +35,7 @@ import static com.google.gson.Gson.DEFAULT_OBJECT_TO_NUMBER_STRATEGY;
 import static com.google.gson.Gson.DEFAULT_SERIALIZE_NULLS;
 import static com.google.gson.Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES;
 import static com.google.gson.Gson.DEFAULT_STRICTNESS;
-import static com.google.gson.internal.ConstructorConstructor.DEFAULT_USE_JDK_UNSAFE;
-import static com.google.gson.internal.bind.MapTypeAdapterFactory.DEFAULT_COMPLEX_MAP_KEYS;
+import static com.google.gson.Gson.DEFAULT_USE_JDK_UNSAFE;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.InlineMe;
@@ -110,7 +111,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public final class GsonBuilder {
   Excluder excluder = Excluder.DEFAULT;
   LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
-  FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
+  FieldNamingStrategy fieldNamingPolicy = DEFAULT_FIELD_NAMING_STRATEGY;
   final Map<Type, InstanceCreator<?>> instanceCreators = new HashMap<>();
   final List<TypeAdapterFactory> factories = new ArrayList<>();
 
@@ -924,7 +925,8 @@ public final class GsonBuilder {
     factories.add(excluder);
 
     // users' type adapters
-    factories.ensureCapacity(factories.size() + this.factories.size() + this.hierarchyFactories.size() + 3);
+    factories.ensureCapacity(
+        factories.size() + this.factories.size() + this.hierarchyFactories.size() + 3);
     addUserDefinedAdapters(factories);
 
     // type adapters for basic platform types
@@ -993,7 +995,8 @@ public final class GsonBuilder {
     }
 
     if (!this.hierarchyFactories.isEmpty()) {
-      List<TypeAdapterFactory> reversedHierarchyFactories = new ArrayList<>(this.hierarchyFactories);
+      List<TypeAdapterFactory> reversedHierarchyFactories =
+          new ArrayList<>(this.hierarchyFactories);
       Collections.reverse(reversedHierarchyFactories);
       all.addAll(reversedHierarchyFactories);
     }

@@ -30,7 +30,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -44,11 +43,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 /** Returns a function that can construct an instance of a requested type. */
 public final class ConstructorConstructor {
-  public static final boolean DEFAULT_USE_JDK_UNSAFE = true;
-  public static final ConstructorConstructor DEFAULT =
-      new ConstructorConstructor(
-          Collections.emptyMap(), DEFAULT_USE_JDK_UNSAFE, Collections.emptyList());
-
   private final Map<Type, InstanceCreator<?>> instanceCreators;
   private final boolean useJdkUnsafe;
   private final List<ReflectionAccessFilter> reflectionFilters;
@@ -339,24 +333,24 @@ public final class ConstructorConstructor {
     return null;
   }
 
-  private static ObjectConstructor<? extends Collection<? extends Object>> newCollectionConstructor(
+  private static ObjectConstructor<? extends Collection<?>> newCollectionConstructor(
       Class<?> rawType) {
 
     // First try List implementation
     if (rawType.isAssignableFrom(ArrayList.class)) {
-      return () -> new ArrayList<>();
+      return ArrayList::new;
     }
     // Then try Set implementation
     else if (rawType.isAssignableFrom(LinkedHashSet.class)) {
-      return () -> new LinkedHashSet<>();
+      return LinkedHashSet::new;
     }
     // Then try SortedSet / NavigableSet implementation
     else if (rawType.isAssignableFrom(TreeSet.class)) {
-      return () -> new TreeSet<>();
+      return TreeSet::new;
     }
     // Then try Queue implementation
     else if (rawType.isAssignableFrom(ArrayDeque.class)) {
-      return () -> new ArrayDeque<>();
+      return ArrayDeque::new;
     }
 
     // Was unable to create matching Collection constructor
@@ -376,7 +370,7 @@ public final class ConstructorConstructor {
     return GsonTypes.getRawType(typeArguments[0]) == String.class;
   }
 
-  private static ObjectConstructor<? extends Map<? extends Object, Object>> newMapConstructor(
+  private static ObjectConstructor<? extends Map<?, Object>> newMapConstructor(
       Type type, Class<?> rawType) {
     // First try Map implementation
     /*
@@ -384,21 +378,21 @@ public final class ConstructorConstructor {
      * values for older JDKs; use own LinkedTreeMap<String, Object> instead
      */
     if (rawType.isAssignableFrom(LinkedTreeMap.class) && hasStringKeyType(type)) {
-      return () -> new LinkedTreeMap<>();
+      return LinkedTreeMap::new;
     } else if (rawType.isAssignableFrom(LinkedHashMap.class)) {
-      return () -> new LinkedHashMap<>();
+      return LinkedHashMap::new;
     }
     // Then try SortedMap / NavigableMap implementation
     else if (rawType.isAssignableFrom(TreeMap.class)) {
-      return () -> new TreeMap<>();
+      return TreeMap::new;
     }
     // Then try ConcurrentMap implementation
     else if (rawType.isAssignableFrom(ConcurrentHashMap.class)) {
-      return () -> new ConcurrentHashMap<>();
+      return ConcurrentHashMap::new;
     }
     // Then try ConcurrentNavigableMap implementation
     else if (rawType.isAssignableFrom(ConcurrentSkipListMap.class)) {
-      return () -> new ConcurrentSkipListMap<>();
+      return ConcurrentSkipListMap::new;
     }
 
     // Was unable to create matching Map constructor
