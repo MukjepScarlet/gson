@@ -987,15 +987,15 @@ public final class GsonBuilder {
 
   private void addUserDefinedAdapters(List<TypeAdapterFactory> all) {
     if (!this.factories.isEmpty()) {
-      List<TypeAdapterFactory> factories = new ArrayList<>(this.factories);
-      Collections.reverse(factories);
-      all.addAll(factories);
+      List<TypeAdapterFactory> reversedFactories = new ArrayList<>(this.factories);
+      Collections.reverse(reversedFactories);
+      all.addAll(reversedFactories);
     }
 
     if (!this.hierarchyFactories.isEmpty()) {
-      List<TypeAdapterFactory> hierarchyFactories = new ArrayList<>(this.hierarchyFactories);
-      Collections.reverse(hierarchyFactories);
-      all.addAll(hierarchyFactories);
+      List<TypeAdapterFactory> reversedHierarchyFactories = new ArrayList<>(this.hierarchyFactories);
+      Collections.reverse(reversedHierarchyFactories);
+      all.addAll(reversedHierarchyFactories);
     }
 
     addTypeAdaptersForDate(datePattern, dateStyle, timeStyle, all);

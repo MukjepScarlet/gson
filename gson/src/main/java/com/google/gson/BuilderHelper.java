@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
-class BuilderHelper {
+final class BuilderHelper {
   private BuilderHelper() {}
 
   static final List<TypeAdapterFactory> DEFAULT_TYPE_ADAPTER_FACTORIES;
