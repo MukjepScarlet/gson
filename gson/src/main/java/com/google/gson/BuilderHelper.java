@@ -98,27 +98,6 @@ class BuilderHelper {
         }
       };
 
-  private static final TypeAdapter<Number> LONG_AS_STRING =
-      new TypeAdapter<Number>() {
-        @Override
-        public Number read(JsonReader in) throws IOException {
-          if (in.peek() == JsonToken.NULL) {
-            in.nextNull();
-            return null;
-          }
-          return in.nextLong();
-        }
-
-        @Override
-        public void write(JsonWriter out, Number value) throws IOException {
-          if (value == null) {
-            out.nullValue();
-            return;
-          }
-          out.value(value.toString());
-        }
-      };
-
   static TypeAdapter<Number> doubleAdapter(boolean serializeSpecialFloatingPointValues) {
     return serializeSpecialFloatingPointValues ? TypeAdapters.DOUBLE : DOUBLE_WITH_CHECK;
   }
@@ -134,12 +113,6 @@ class BuilderHelper {
               + " is not a valid double value as per JSON specification. To override this"
               + " behavior, use GsonBuilder.serializeSpecialFloatingPointValues() method.");
     }
-  }
-
-  static TypeAdapter<Number> longAdapter(LongSerializationPolicy longSerializationPolicy) {
-    return longSerializationPolicy == LongSerializationPolicy.DEFAULT
-        ? TypeAdapters.LONG
-        : LONG_AS_STRING;
   }
 
   static TypeAdapter<AtomicLong> atomicLongAdapter(TypeAdapter<Number> longAdapter) {
