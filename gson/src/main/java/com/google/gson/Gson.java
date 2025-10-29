@@ -16,33 +16,18 @@
 
 package com.google.gson;
 
-import static com.google.gson.BuilderHelper.atomicLongAdapter;
-import static com.google.gson.BuilderHelper.atomicLongArrayAdapter;
-import static com.google.gson.BuilderHelper.doubleAdapter;
-import static com.google.gson.BuilderHelper.floatAdapter;
-import static com.google.gson.BuilderHelper.longAdapter;
 import static com.google.gson.BuilderHelper.unmodifiableList;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.GsonBuildConfig;
-import com.google.gson.internal.LazilyParsedNumber;
 import com.google.gson.internal.Primitives;
 import com.google.gson.internal.Streams;
-import com.google.gson.internal.bind.ArrayTypeAdapter;
-import com.google.gson.internal.bind.CollectionTypeAdapterFactory;
-import com.google.gson.internal.bind.DefaultDateTypeAdapter;
 import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
 import com.google.gson.internal.bind.JsonTreeReader;
 import com.google.gson.internal.bind.JsonTreeWriter;
-import com.google.gson.internal.bind.MapTypeAdapterFactory;
-import com.google.gson.internal.bind.NumberTypeAdapter;
-import com.google.gson.internal.bind.ObjectTypeAdapter;
-import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.internal.bind.SerializationDelegatingTypeAdapter;
-import com.google.gson.internal.bind.TypeAdapters;
-import com.google.gson.internal.sql.SqlTypesSupport;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -54,17 +39,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * This is the main class for using Gson. Gson is typically used by first constructing a Gson
@@ -160,11 +140,8 @@ public final class Gson {
   static final FormattingStyle DEFAULT_FORMATTING_STYLE = FormattingStyle.COMPACT;
   static final boolean DEFAULT_ESCAPE_HTML = true;
   static final boolean DEFAULT_SERIALIZE_NULLS = false;
-  static final boolean DEFAULT_COMPLEX_MAP_KEYS = false;
   static final boolean DEFAULT_SPECIALIZE_FLOAT_VALUES = false;
-  static final boolean DEFAULT_USE_JDK_UNSAFE = true;
   static final String DEFAULT_DATE_PATTERN = null;
-  static final FieldNamingStrategy DEFAULT_FIELD_NAMING_STRATEGY = FieldNamingPolicy.IDENTITY;
   static final ToNumberStrategy DEFAULT_OBJECT_TO_NUMBER_STRATEGY = ToNumberPolicy.DOUBLE;
   static final ToNumberStrategy DEFAULT_NUMBER_TO_NUMBER_STRATEGY =
       ToNumberPolicy.LAZILY_PARSED_NUMBER;
@@ -259,145 +236,31 @@ public final class Gson {
   }
 
   Gson(GsonBuilder builder) {
-    this(
-        builder.excluder,
-        builder.fieldNamingPolicy,
-        new HashMap<>(builder.instanceCreators),
-        builder.serializeNulls,
-        builder.complexMapKeySerialization,
-        builder.generateNonExecutableJson,
-        builder.escapeHtmlChars,
-        builder.formattingStyle,
-        builder.strictness,
-        builder.serializeSpecialFloatingPointValues,
-        builder.useJdkUnsafe,
-        builder.longSerializationPolicy,
-        builder.datePattern,
-        builder.dateStyle,
-        builder.timeStyle,
-        unmodifiableList(builder.factories),
-        unmodifiableList(builder.hierarchyFactories),
-        builder.getAllFactoriesToBeAdded(),
-        builder.objectToNumberStrategy,
-        builder.numberToNumberStrategy,
-        unmodifiableList(builder.reflectionFilters));
-  }
-
-  private Gson(
-      Excluder excluder,
-      FieldNamingStrategy fieldNamingStrategy,
-      Map<Type, InstanceCreator<?>> instanceCreators,
-      boolean serializeNulls,
-      boolean complexMapKeySerialization,
-      boolean generateNonExecutableGson,
-      boolean htmlSafe,
-      FormattingStyle formattingStyle,
-      Strictness strictness,
-      boolean serializeSpecialFloatingPointValues,
-      boolean useJdkUnsafe,
-      LongSerializationPolicy longSerializationPolicy,
-      String datePattern,
-      int dateStyle,
-      int timeStyle,
-      List<TypeAdapterFactory> builderFactories,
-      List<TypeAdapterFactory> builderHierarchyFactories,
-      List<TypeAdapterFactory> factoriesToBeAdded,
-      ToNumberStrategy objectToNumberStrategy,
-      ToNumberStrategy numberToNumberStrategy,
-      List<ReflectionAccessFilter> reflectionFilters) {
-    this.excluder = excluder;
-    this.fieldNamingStrategy = fieldNamingStrategy;
-    this.instanceCreators = instanceCreators;
-    this.serializeNulls = serializeNulls;
-    this.complexMapKeySerialization = complexMapKeySerialization;
-    this.generateNonExecutableJson = generateNonExecutableGson;
-    this.htmlSafe = htmlSafe;
-    this.formattingStyle = formattingStyle;
-    this.strictness = strictness;
-    this.serializeSpecialFloatingPointValues = serializeSpecialFloatingPointValues;
-    this.useJdkUnsafe = useJdkUnsafe;
-    this.longSerializationPolicy = longSerializationPolicy;
-    this.datePattern = datePattern;
-    this.dateStyle = dateStyle;
-    this.timeStyle = timeStyle;
-    this.builderFactories = builderFactories;
-    this.builderHierarchyFactories = builderHierarchyFactories;
-    this.objectToNumberStrategy = objectToNumberStrategy;
-    this.numberToNumberStrategy = numberToNumberStrategy;
-    this.reflectionFilters = reflectionFilters;
-
-    List<TypeAdapterFactory> factories = new ArrayList<>();
-
-    // built-in type adapters that cannot be overridden
-    factories.add(TypeAdapters.JSON_ELEMENT_FACTORY);
-    factories.add(ObjectTypeAdapter.getFactory(objectToNumberStrategy));
-
-    // the excluder must precede all adapters that handle user-defined types
-    factories.add(excluder);
-
-    // users' type adapters
-    factories.addAll(factoriesToBeAdded);
-
-    // type adapters for basic platform types
-    factories.add(TypeAdapters.STRING_FACTORY);
-    factories.add(TypeAdapters.INTEGER_FACTORY);
-    factories.add(TypeAdapters.BOOLEAN_FACTORY);
-    factories.add(TypeAdapters.BYTE_FACTORY);
-    factories.add(TypeAdapters.SHORT_FACTORY);
-    TypeAdapter<Number> longAdapter = longAdapter(longSerializationPolicy);
-    factories.add(TypeAdapters.newFactory(long.class, Long.class, longAdapter));
-    factories.add(
-        TypeAdapters.newFactory(
-            double.class, Double.class, doubleAdapter(serializeSpecialFloatingPointValues)));
-    factories.add(
-        TypeAdapters.newFactory(
-            float.class, Float.class, floatAdapter(serializeSpecialFloatingPointValues)));
-    factories.add(NumberTypeAdapter.getFactory(numberToNumberStrategy));
-    factories.add(TypeAdapters.ATOMIC_INTEGER_FACTORY);
-    factories.add(TypeAdapters.ATOMIC_BOOLEAN_FACTORY);
-    factories.add(TypeAdapters.newFactory(AtomicLong.class, atomicLongAdapter(longAdapter)));
-    factories.add(
-        TypeAdapters.newFactory(AtomicLongArray.class, atomicLongArrayAdapter(longAdapter)));
-    factories.add(TypeAdapters.ATOMIC_INTEGER_ARRAY_FACTORY);
-    factories.add(TypeAdapters.CHARACTER_FACTORY);
-    factories.add(TypeAdapters.STRING_BUILDER_FACTORY);
-    factories.add(TypeAdapters.STRING_BUFFER_FACTORY);
-    factories.add(TypeAdapters.newFactory(BigDecimal.class, TypeAdapters.BIG_DECIMAL));
-    factories.add(TypeAdapters.newFactory(BigInteger.class, TypeAdapters.BIG_INTEGER));
-    // Add adapter for LazilyParsedNumber because user can obtain it from Gson and then try to
-    // serialize it again
-    factories.add(
-        TypeAdapters.newFactory(LazilyParsedNumber.class, TypeAdapters.LAZILY_PARSED_NUMBER));
-    factories.add(TypeAdapters.URL_FACTORY);
-    factories.add(TypeAdapters.URI_FACTORY);
-    factories.add(TypeAdapters.UUID_FACTORY);
-    factories.add(TypeAdapters.CURRENCY_FACTORY);
-    factories.add(TypeAdapters.LOCALE_FACTORY);
-    factories.add(TypeAdapters.INET_ADDRESS_FACTORY);
-    factories.add(TypeAdapters.BIT_SET_FACTORY);
-    factories.add(DefaultDateTypeAdapter.DEFAULT_STYLE_FACTORY);
-    factories.add(TypeAdapters.CALENDAR_FACTORY);
-    factories.addAll(SqlTypesSupport.SQL_TYPE_FACTORIES);
-    factories.add(ArrayTypeAdapter.FACTORY);
-    factories.add(TypeAdapters.CLASS_FACTORY);
-
+    this.excluder = builder.excluder;
+    this.fieldNamingStrategy = builder.fieldNamingPolicy;
+    this.instanceCreators = new HashMap<>(builder.instanceCreators);
+    this.serializeNulls = builder.serializeNulls;
+    this.complexMapKeySerialization = builder.complexMapKeySerialization;
+    this.generateNonExecutableJson = builder.generateNonExecutableJson;
+    this.htmlSafe = builder.escapeHtmlChars;
+    this.formattingStyle = builder.formattingStyle;
+    this.strictness = builder.strictness;
+    this.serializeSpecialFloatingPointValues = builder.serializeSpecialFloatingPointValues;
+    this.useJdkUnsafe = builder.useJdkUnsafe;
+    this.longSerializationPolicy = builder.longSerializationPolicy;
+    this.datePattern = builder.datePattern;
+    this.dateStyle = builder.dateStyle;
+    this.timeStyle = builder.timeStyle;
+    this.builderFactories = unmodifiableList(builder.factories);
+    this.builderHierarchyFactories = unmodifiableList(builder.hierarchyFactories);
+    this.objectToNumberStrategy = builder.objectToNumberStrategy;
+    this.numberToNumberStrategy = builder.numberToNumberStrategy;
+    this.reflectionFilters = unmodifiableList(builder.reflectionFilters);
     this.constructorConstructor =
         new ConstructorConstructor(instanceCreators, useJdkUnsafe, reflectionFilters);
-    // type adapters for composite and user-defined types
-    factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
-    factories.add(new MapTypeAdapterFactory(constructorConstructor, complexMapKeySerialization));
     this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
-    factories.add(jsonAdapterFactory);
-    factories.add(TypeAdapters.ENUM_FACTORY);
-    factories.add(
-        new ReflectiveTypeAdapterFactory(
-            constructorConstructor,
-            fieldNamingStrategy,
-            excluder,
-            jsonAdapterFactory,
-            reflectionFilters));
-
-    this.factories = unmodifiableList(factories);
+    this.factories =
+        unmodifiableList(builder.createFactories(constructorConstructor, jsonAdapterFactory));
   }
 
   /**

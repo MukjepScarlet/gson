@@ -113,6 +113,10 @@ import java.util.Map;
  * This format will serialize and deserialize just fine as long as this adapter is registered.
  */
 public final class MapTypeAdapterFactory implements TypeAdapterFactory {
+  public static final boolean DEFAULT_COMPLEX_MAP_KEYS = false;
+  public static final MapTypeAdapterFactory DEFAULT =
+      new MapTypeAdapterFactory(ConstructorConstructor.DEFAULT, DEFAULT_COMPLEX_MAP_KEYS);
+
   private final ConstructorConstructor constructorConstructor;
   final boolean complexMapKeySerialization;
 

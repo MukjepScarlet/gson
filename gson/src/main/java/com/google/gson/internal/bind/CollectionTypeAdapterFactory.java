@@ -32,6 +32,9 @@ import java.util.Collection;
 
 /** Adapt a homogeneous collection of objects. */
 public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
+  public static final CollectionTypeAdapterFactory DEFAULT =
+      new CollectionTypeAdapterFactory(ConstructorConstructor.DEFAULT);
+
   private final ConstructorConstructor constructorConstructor;
 
   public CollectionTypeAdapterFactory(ConstructorConstructor constructorConstructor) {
