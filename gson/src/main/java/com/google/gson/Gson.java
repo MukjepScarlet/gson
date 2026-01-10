@@ -366,6 +366,9 @@ public final class Gson {
     factories.add(DefaultDateTypeAdapter.DEFAULT_STYLE_FACTORY);
     factories.add(TypeAdapters.CALENDAR_FACTORY);
     factories.addAll(SqlTypesSupport.SQL_TYPE_FACTORIES);
+    if (javaTimeFactory != null) {
+      factories.add(javaTimeFactory);
+    }
     factories.add(ArrayTypeAdapter.FACTORY);
     factories.add(TypeAdapters.CLASS_FACTORY);
 
